@@ -1,0 +1,38 @@
+{
+  "name": "iot_developmentsjm",
+  "version": "1.0.0",
+  "description": "Desarrollos realizados en el programa jóvenes investigadores para apoyar en proyecto de maestría en automatización y control de cultivos de cannabis",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon index.js",
+    "start": "node index.js",
+    "lint": "eslint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/santiagoSuarez219/Iot_DevelopmentsJM.git"
+  },
+  "keywords": [
+    "Iot",
+    "NodeJS"
+  ],
+  "author": "Santiago Suarez",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/santiagoSuarez219/Iot_DevelopmentsJM/issues"
+  },
+  "homepage": "https://github.com/santiagoSuarez219/Iot_DevelopmentsJM#readme",
+  "devDependencies": {
+    "eslint": "^8.38.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "nodemon": "^2.0.22",
+    "prettier": "^2.8.7"
+  },
+  "dependencies": {
+    "@influxdata/influxdb-client": "^1.33.2",
+    "express": "^4.18.2",
+    "influx": "^5.9.3",
+    "mqtt": "^4.3.7"
+  }
+}
