@@ -11,17 +11,35 @@ const brokerUrl = 'mqtt://localhost:1883';
 const service =  new TemperatureService(url, token, org);
 
 router.get('/', (req,res) =>{
-  service.getData((data) => {
+  service.getLastData((data) => {
     res.send(data);
   });
 });
 
-router.post('/setpoint', (req,res) =>{
-  const setpoint = req.body.setpoint;
-  console.log(setpoint);
-  service.modificarSetPoint(setpoint, () => {
-    res.send('Mensaje enviado al broker MQTT');
+// router.post('/setpoint', (req,res) =>{
+//   const setpoint = req.body.setpoint;
+//   console.log(setpoint);
+//   service.modificarSetPoint(setpoint, () => {
+//     res.send('Mensaje enviado al broker MQTT');
+//   });
+// });
+
+router.get('/subscription', (req,res) =>{
+  service.createSubscription(() => {
+    res.status(200).send('Suscripcion creada');
   });
+});
+
+router.get('/setpoint', async (req,res) =>{
+  const setpoint = await service.getSetPoint('Temperatura');
+  res.json(setpoint)
+});
+
+router.patch('/setpoint/:id', async (req,res) =>{
+  const { id } = req.params;
+  const body = req.body;
+  const setpoint = await service.modificarSetPoint(id, body);
+  res.json(setpoint)
 });
 
 

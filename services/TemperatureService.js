@@ -1,22 +1,21 @@
-const {InfluxDB, flux} = require('@influxdata/influxdb-client')
+const {InfluxDB, flux, FluxTableMetaData} = require('@influxdata/influxdb-client')
+const {models} = require('../libs/sequelize');
 const mqtt = require('mqtt');
 
 class TemperatureService {
+  constructor(url, token, org, brockerUrl) {
+    this.client = new InfluxDB({ url, token });
+    this.queryApi = this.client.getQueryApi(org);
+    //this.client = mqtt.connect(brockerUrl)
+  }
 
-    constructor(url, token, org, brockerUrl) {
-      this.client = new InfluxDB({ url, token });
-      this.queryApi = this.client.getQueryApi(org);
-      this.client = mqtt.connect(brockerUrl)
-    }
-
-    getData(callback) {
+  getLastData(callback) {
       const query = flux`from(bucket:"iotsmart")\
-      |> range(start: -72h)\
+      |> range(start: 0)\
       |> filter(fn:(r) => r._measurement == "my_measurement")\
       |> filter(fn:(r) => r.location == "chamber_1")\
       |> filter(fn:(r) => r._field == "temperature")\
-      |> aggregateWindow(every: 24h, fn: max, createEmpty: false,)\
-      |> yield(name:"max")`
+      |> last()`;
 
       const resultados = [];
 
@@ -39,11 +38,46 @@ class TemperatureService {
     });
   }
 
-  modificarSetPoint(setpoint, callback) {
-    console.log(setpoint);
-    this.client.publish('setpoint', setpoint.toString());
-    callback();
+  // modificarSetPoint(setpoint, callback) {
+  //   console.log(setpoint);
+  //   this.client.publish('setpoint', setpoint.toString());
+  //   callback();
+  // }
+  async getSetPoint(valor){
+    const setpoint = await this.findOne({
+      where: {setpoint: valor}}).then(setpoint => {
+        return setpoint;
+      })
+  }
 
+  async modificarSetPoint(id, changes) {
+    const setpoint = await this.findOne(id);
+    const rta = await setpoint.update(changes);
+    return rta;
+  }
+
+  async update(id,changes){const user=await this.findOne(id);const rta=await user.update(changes);return rta;}
+
+  async createSubscription(callback) {
+    try {
+      const query = `
+      from(bucket: "iotsmart")
+        |> filter(fn:(r) => r._measurement == "my_measurement")\
+        |> filter(fn:(r) => r.location == "chamber_1")\
+        |> filter(fn:(r) => r._field == "temperature")
+      `;
+      const subscription = await this.client.createStreamQuery({ query });
+      subscription.subscribe((result) => {
+        if (result instanceof FluxTableMetaData){
+          //Manejo de datos
+        } else {
+          console.log('Nueva actualizacion: ', result);
+        }
+      });
+      callback();
+    } catch (error){
+      console.error('Error al gestionar la suscripcion: ', error);
+    }
   }
 }
 

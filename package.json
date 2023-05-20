@@ -33,6 +33,8 @@
     "@influxdata/influxdb-client": "^1.33.2",
     "express": "^4.18.2",
     "influx": "^5.9.3",
-    "mqtt": "^4.3.7"
+    "pg": "^8.11.0",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.31.1"
   }
 }
