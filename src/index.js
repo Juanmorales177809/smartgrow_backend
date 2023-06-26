@@ -8,7 +8,6 @@ const cors = require('cors');
 const app = express();
 const httpServer = createServer(app);
 
-
 app.use(cors());
 app.set('port', process.env.PORT || 8000);
 app.set('views', path.join(__dirname, 'views'));
@@ -37,6 +36,21 @@ app.post('/hidroponico', (req, res) =>{
     const humedad = req.body.humedad;
     io.emit('message', {sensor: 'hidroponico', ph: ph, ec: ec, temperatura: temperatura, humedad: humedad});
     res.status(200).json({message: 'recibido'})
+});
+
+app.post('/st_hidroponic_ec', (req, res) =>{
+    const st = req.body.st;
+    // Se envia el dato al ESP
+});
+
+app.post('/st_hidroponic_temperatura', (req, res) =>{
+    const st = req.body.st;
+    // Se envia el dato al ESP
+});
+
+app.post('/st_hidroponic_ph', (req, res) =>{
+    const st = req.body.st;
+    // Se envia el dato al ESP
 });
 
 app.post('/sensores_de_flujo', (req, res) =>{
