@@ -5,6 +5,7 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const routes = require('./routes');
+const mqttClient = require('./mqttClient');
 
 const app = express();
 const httpServer = createServer(app);
@@ -22,4 +23,8 @@ httpServer.listen(app.get('port'), () => {
     console.log('Server on port', app.get('port'));
 });
 
+const mqttBrokerUrl = 'mqtt://localhost:1883';
+const mqttTopic = 'smartgrow/#';
+
+clientMqtt = mqttClient(mqttBrokerUrl, mqttTopic);
 io = realtimeServer(httpServer);

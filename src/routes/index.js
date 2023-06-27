@@ -1,42 +1,27 @@
 const express = require('express');
 const router = express.Router();
 const path = require('path');
+const MqttClient = require('../ mqttClient');
 
 router.get('/', (req, res) => {
     res.json({'title': 'Hello World'})
 });
 
-router.post('/scd40', (req, res) =>{
-    console.log(req.body);
-    const Co2 = req.body.co2;
-    const temperatura = req.body.temperatura;
-    const humedad = req.body.humedad;
-    console.log(Co2, temperatura, humedad);
-    io.emit('message', {sensor: 'scd40', Co2: Co2, temperatura: temperatura, humedad: humedad});
-    res.status(200).json({message: 'recibido'})
-});
-
-router.post('/hidroponico', (req, res) =>{
-    const ph = req.body.ph;
-    const ec = req.body.ec;
-    const temperatura = req.body.temperatura;
-    const humedad = req.body.humedad;
-    io.emit('message', {sensor: 'hidroponico', ph: ph, ec: ec, temperatura: temperatura, humedad: humedad});
-    res.status(200).json({message: 'recibido'})
-});
-
 router.post('/st_hidroponic_ec', (req, res) =>{
     const st = req.body.st;
+    clientMqtt.publish('smartgrow/st_hidroponic_ec', st);
     // Se envia el dato al ESP
 });
 
 router.post('/st_hidroponic_temperatura', (req, res) =>{
     const st = req.body.st;
+    clientMqtt.publish('smartgrow/st_hidroponic_temperatura', st);
     // Se envia el dato al ESP
 });
 
 router.post('/st_hidroponic_ph', (req, res) =>{
     const st = req.body.st;
+    clientMqtt.publish('smartgrow/st_hidroponic_ph', st);
     // Se envia el dato al ESP
 });
 
