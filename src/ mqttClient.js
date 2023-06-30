@@ -21,6 +21,5 @@ module.exports = (brokerUrl, topic) => {
         console.log(`Error: ${error}`);
         client.end();
     });
-
     return client;
 }

@@ -5,7 +5,7 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const routes = require('./routes');
-const mqttClient = require('./mqttClient');
+const mqttClient = require('./ mqttClient');
 
 const app = express();
 const httpServer = createServer(app);
