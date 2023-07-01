@@ -27,10 +27,8 @@ router.get('/st_hidroponic_ph', (req, res) =>{
 router.get('/rele', async (req, res) =>{
     try {
         const { rele } = req.query;
-        const response = await fetch(`http://10.220.85.100/api?rele=${rele}`);
-        const data = await response.json();
-        console.log(data);
-        res.json(data)
+        clientMqtt.publish('smartgrow/hidroponico/actuadores', rele);
+        res.json({'rele': rele})
       } catch (error) {
         console.log(error);
       }
