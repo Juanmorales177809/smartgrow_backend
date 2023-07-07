@@ -22,7 +22,7 @@
 #include "esp_log.h"
 #include "mqtt_client.h"
 
-int32_t entrada_de_agua_hidroponico = 1, desague_hidroponico = 1, recirculacion_hidroponico = 1;
+int32_t entrada_de_agua_hidroponico = 1, desague_hidroponico = 1, recirculacion_hidroponico = 0;
 
 #define ENTRADA_HIDROPONICO 14
 #define DESAGUE_HIDROPONICO 27
@@ -101,7 +101,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         {
             printf("No se reconoce el dato");
         }
-        sprintf(res, "Entrada: %d, Desague: %d, Recirculacion: %d", !entrada_de_agua_hidroponico, !desague_hidroponico, !recirculacion_hidroponico);
+        sprintf(res, "Entrada: %d, Desague: %d, Recirculacion: %d", !entrada_de_agua_hidroponico, !desague_hidroponico, recirculacion_hidroponico);
         esp_mqtt_client_publish(client, "smartgrow/hidroponico/actuadores/estado", res, 0, 0, 0);
         ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
         break;
