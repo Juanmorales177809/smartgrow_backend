@@ -22,12 +22,73 @@
 #include "esp_log.h"
 #include "mqtt_client.h"
 
-int32_t entrada_de_agua_hidroponico = 1, desague_hidroponico = 1, recirculacion_hidroponico = 0;
+int32_t entrada_de_agua_hidroponico = 1, desague_hidroponico = 1, recirculacion_hidroponico = 1, moto_bomba_hidroponico = 0;
 
 #define ENTRADA_HIDROPONICO 14
 #define DESAGUE_HIDROPONICO 27
 #define RECIRCULACION_HIDROPONICO 26
+#define MOTO_BOMBA 25
+#define TIME_RECIRCULACION 60000
 
+void handle_mqtt_data(const char* data){
+    if (strcmp(data, "entrada_de_agua_hidroponico") == 0)
+        {
+            // Se hace un toogle de la entrada de agua puesto que esta se puede activar y desactivar
+            printf("Entrada de agua\r\n");
+            entrada_de_agua_hidroponico = !entrada_de_agua_hidroponico;
+            gpio_set_level(ENTRADA_HIDROPONICO, entrada_de_agua_hidroponico);
+        }
+        else if (strcmp(data, "desague_hidroponico") == 0)
+        {
+            printf("Desague\r\n");
+            desague_hidroponico = !desague_hidroponico;
+            if(desague_hidroponico){
+                recirculacion_hidroponico = 0;
+                moto_bomba_hidroponico = 1;
+                gpio_set_level(RECIRCULACION_HIDROPONICO, recirculacion_hidroponico);
+                gpio_set_level(DESAGUE_HIDROPONICO, desague_hidroponico);
+                gpio_set_level(MOTO_BOMBA, moto_bomba_hidroponico);
+            } else {
+                gpio_set_level(DESAGUE_HIDROPONICO, desague_hidroponico);
+                moto_bomba_hidroponico = 0;
+                gpio_set_level(MOTO_BOMBA, moto_bomba_hidroponico);
+            }
+        }
+        else if (strcmp(data, "recirculacion_hidroponico") == 0)
+        {
+            printf("Recirculacion\r\n");
+            recirculacion_hidroponico = !recirculacion_hidroponico;
+            if(recirculacion_hidroponico){
+                desague_hidroponico = 0;
+                moto_bomba_hidroponico = 1;
+                gpio_set_level(DESAGUE_HIDROPONICO, desague_hidroponico);
+                gpio_set_level(RECIRCULACION_HIDROPONICO, recirculacion_hidroponico);
+                gpio_set_level(MOTO_BOMBA, moto_bomba_hidroponico);
+                send_data_mqtt();
+                vTaskDelay(TIME_RECIRCULACION / portTICK_PERIOD_MS);
+                moto_bomba_hidroponico = 0;
+                recirculacion_hidroponico = !recirculacion_hidroponico;
+                gpio_set_level(MOTO_BOMBA, moto_bomba_hidroponico);
+                gpio_set_level(RECIRCULACION_HIDROPONICO, recirculacion_hidroponico);
+                send_data_mqtt();
+            } else {
+                gpio_set_level(RECIRCULACION_HIDROPONICO, recirculacion_hidroponico);
+                moto_bomba_hidroponico = 0;
+                gpio_set_level(MOTO_BOMBA, moto_bomba_hidroponico);
+            }
+        }
+        else
+        {
+            printf("No se reconoce el dato");
+        }
+        send_data_mqtt();
+};
+
+void send_data_mqtt(){
+    char res[64];
+    sprintf(res, "Entrada: %d, Desague: %d, Recirculacion: %d Moto Bomba: %d", !entrada_de_agua_hidroponico, !desague_hidroponico, !recirculacion_hidroponico, moto_bomba_hidroponico);
+    esp_mqtt_client_publish(client, "smartgrow/hidroponico/actuadores/estado", res, 0, 0, 0);
+}
 
 static const char *TAG = "MQTT_EXAMPLE";
 
@@ -37,7 +98,6 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
     esp_mqtt_event_handle_t event = event_data;
     esp_mqtt_client_handle_t client = event->client;
     int msg_id = 0;
-    char res[64];
     switch ((esp_mqtt_event_id_t)event_id) {
     case MQTT_EVENT_CONNECTED:
         ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
@@ -79,30 +139,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         printf("DATA=%.*s\r\n", event->data_len, event->data);
         char DATA[64];
         sprintf(DATA, "%.*s", event->data_len, event->data);
-        if (strcmp(DATA, "entrada_de_agua_hidroponico") == 0)
-        {
-            printf("Entrada de agua\r\n");
-            entrada_de_agua_hidroponico = !entrada_de_agua_hidroponico;
-            gpio_set_level(ENTRADA_HIDROPONICO, entrada_de_agua_hidroponico);
-        }
-        else if (strcmp(DATA, "desague_hidroponico") == 0)
-        {
-            printf("Desague\r\n");
-            desague_hidroponico = !desague_hidroponico;
-            gpio_set_level(DESAGUE_HIDROPONICO, desague_hidroponico);
-        }
-        else if (strcmp(DATA, "recirculacion_hidroponico") == 0)
-        {
-            printf("Recirculacion\r\n");
-            recirculacion_hidroponico = !recirculacion_hidroponico;
-            gpio_set_level(RECIRCULACION_HIDROPONICO, recirculacion_hidroponico);
-        }
-        else
-        {
-            printf("No se reconoce el dato");
-        }
-        sprintf(res, "Entrada: %d, Desague: %d, Recirculacion: %d", !entrada_de_agua_hidroponico, !desague_hidroponico, recirculacion_hidroponico);
-        esp_mqtt_client_publish(client, "smartgrow/hidroponico/actuadores/estado", res, 0, 0, 0);
+        handle_mqtt_data(DATA);
         ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
         break;
     case MQTT_EVENT_ERROR:
@@ -129,14 +166,17 @@ void app_main(void)
     gpio_reset_pin(ENTRADA_HIDROPONICO);
     gpio_reset_pin(DESAGUE_HIDROPONICO);
     gpio_reset_pin(RECIRCULACION_HIDROPONICO);
+    gpio_reset_pin(MOTO_BOMBA);
 
     gpio_set_direction(ENTRADA_HIDROPONICO, GPIO_MODE_OUTPUT);
     gpio_set_direction(DESAGUE_HIDROPONICO, GPIO_MODE_OUTPUT);
     gpio_set_direction(RECIRCULACION_HIDROPONICO, GPIO_MODE_OUTPUT);
+    gpio_set_direction(MOTO_BOMBA, GPIO_MODE_OUTPUT);
 
     gpio_set_level(ENTRADA_HIDROPONICO, 1);
     gpio_set_level(DESAGUE_HIDROPONICO, 1);
-    gpio_set_level(RECIRCULACION_HIDROPONICO, 0);
+    gpio_set_level(RECIRCULACION_HIDROPONICO, 1);
+    gpio_set_level(MOTO_BOMBA, 0);
 
 
     ESP_LOGI(TAG, "[APP] Startup..");
