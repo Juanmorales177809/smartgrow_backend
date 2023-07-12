@@ -4,7 +4,7 @@ const realtimeServer = require('./realtimeServer');
 const path = require('path');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const routes = require('./routes');
+const routerApi = require('./routes');
 const mqttClient = require('./ mqttClient');
 
 const app = express();
@@ -17,7 +17,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-app.use('/', routes);
+routerApi(app);
 
 httpServer.listen(app.get('port'), () => {
     console.log('Server on port', app.get('port'));
