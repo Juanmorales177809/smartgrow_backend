@@ -28,8 +28,9 @@ router.get('/st_hidroponic_ph', (req, res) =>{
 
 router.get('/rele', async (req, res) =>{
     try {
-        const { rele } = req.query;
-        await service.activation(rele, clientMqtt);
+        const { rele, tiempo_recirculacion} = req.query;
+        console.log(tiempo_recirculacion);
+        await service.activation(rele, clientMqtt, tiempo_recirculacion);
         res.json({'rele': rele})
       } catch (error) {
         console.log(error);
